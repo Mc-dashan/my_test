@@ -1,5 +1,5 @@
+import 'package:demo02/pages/category.dart';
 import 'package:demo02/pages/home.dart';
-import 'package:demo02/pages/search.dart';
 import 'package:demo02/pages/shopping_car.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,7 +20,7 @@ class _IndexPageState extends State<IndexPage> {
     BottomNavigationBarItem(icon: Icon(Icons.person), title: Text("我的")),
   ];
 
-  List<Widget> pageList = [Home(), Search(), ShoppingCar(), My()];
+  final List pageList = [Home(), Category(), ShoppingCar(), My()];
 
   final selectColor = Colors.pink;
   final unSelectColor = Colors.grey;

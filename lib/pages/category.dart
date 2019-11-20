@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Search extends StatefulWidget {
+class Category extends StatefulWidget {
   @override
-  _SearchState createState() => _SearchState();
+  _CategoryState createState() => _CategoryState();
 }
 
-class _SearchState extends State<Search> {
+class _CategoryState extends State<Category> {
   @override
   Widget build(BuildContext context) {
     return Container(
