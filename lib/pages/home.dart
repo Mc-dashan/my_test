@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -13,5 +14,9 @@ class _HomeState extends State<Home> {
         child: Text("首页"),
       ),
     );
+  }
+
+  void getHttp() async {
+    try {} catch (e) {}
   }
 }
