@@ -35,6 +35,7 @@ class _IndexPageState extends State<IndexPage> {
         unselectedFontSize: fontSize,
         selectedItemColor: selectColor,
         unselectedItemColor: unSelectColor,
+        onTap: (int index) {},
       ),
     );
   }
