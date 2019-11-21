@@ -3,6 +3,7 @@ import 'package:demo02/pages/home.dart';
 import 'package:demo02/pages/shopping_car.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'my.dart';
 
 class IndexPage extends StatefulWidget {
@@ -29,6 +30,7 @@ class _IndexPageState extends State<IndexPage> {
   int _currentIndex = 0;
   @override
   Widget build(BuildContext context) {
+    ScreenUtil.instance = ScreenUtil(width: 750, height: 1334)..init(context);
     return Scaffold(
       backgroundColor: Color.fromRGBO(244, 245, 245, 1.0),
       appBar: AppBar(
