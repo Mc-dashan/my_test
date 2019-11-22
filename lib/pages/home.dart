@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:demo02/service/service_mothed.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -13,42 +14,48 @@ class _HomeState extends State<Home> {
   String responseTv = "";
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: SingleChildScrollView(
-      child: Center(
-          child: FutureBuilder(
-              future: getHomePageContent(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  var data = json.decode(snapshot.data.toString());
-                  List<Map> swiper = (data['data']['slides'] as List).cast();
-                  List<Map> navigatorList =
-                      (data['data']['category'] as List).cast();
-                  String adPrcture =
-                      data['data']['advertesPicture']['PICTURE_ADDRESS'];
-                  if (navigatorList.length > 10) {
-                    navigatorList.removeRange(10, navigatorList.length);
-                  }
-                  return Column(
-                    children: <Widget>[
-                      SwiperDiy(
-                        swiperDateList: swiper,
-                      ),
-                      TopNavigator(
-                        navigatorList: navigatorList,
-                      ),
-                      AdBanner(
-                        adPicture: adPrcture,
-                      ),
-                    ],
-                  );
-                } else {
-                  return Center(
-                    child: Text("服务器挂了"),
-                  );
-                }
-              })),
-    ));
+    return Scaffold(
+      body: FutureBuilder(
+          future: getHomePageContent(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              var data = json.decode(snapshot.data.toString());
+              List<Map> swiper = (data['data']['slides'] as List).cast();
+              List<Map> navigatorList =
+                  (data['data']['category'] as List).cast();
+              String adPrcture =
+                  data['data']['advertesPicture']['PICTURE_ADDRESS'];
+              String leaderImg = data['data']['shopInfo']['leaderImage'];
+              String leaderPhone = data['data']['shopInfo']['leaderPhone'];
+              List<Map> recommendList =
+                  (data['data']["recommend"] as List).cast();
+              if (navigatorList.length > 10) {
+                navigatorList.removeRange(10, navigatorList.length);
+              }
+              return SingleChildScrollView(
+                child: Column(
+                  children: <Widget>[
+                    SwiperDiy(
+                      swiperDateList: swiper,
+                    ),
+                    TopNavigator(
+                      navigatorList: navigatorList,
+                    ),
+                    AdBanner(
+                      adPicture: adPrcture,
+                    ),
+                    LeaderPhone(leaderImg: leaderImg, leaderPhone: leaderPhone),
+                    Recommend(
+                      recommendList: recommendList,
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return Center(child: Text("加载中。。。。"));
+            }
+          }),
+    );
   }
 }
 
@@ -136,8 +143,91 @@ class LeaderPhone extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Stack(
-        children: <Widget>[Text(leaderPhone), Image.network(leaderImg)],
+        child: InkWell(
+      onTap: () {
+        takePhone();
+      },
+      child: Image.network(leaderImg),
+    ));
+  }
+
+  void takePhone() async {
+    String url = "tel:" + leaderPhone;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw ("url无效");
+    }
+  }
+}
+
+class Recommend extends StatelessWidget {
+  final List recommendList;
+  const Recommend({Key key, this.recommendList}) : super(key: key);
+//推荐商品标题
+
+  Widget _titleWidget() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.fromLTRB(10, 2, 0, 5),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          border:
+              Border(bottom: BorderSide(width: 0.5, color: Colors.black12))),
+      child: Text(
+        "商品推荐",
+        style: TextStyle(color: Colors.pink),
+      ),
+    );
+  }
+
+//每个商品
+
+  Widget _item(int index) {
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        height: ScreenUtil().setHeight(330),
+        width: ScreenUtil().setWidth(250),
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            border:
+                Border(left: BorderSide(width: 0.5, color: Colors.black12))),
+        child: Column(
+          children: <Widget>[
+            Image.network(recommendList[index]['image']),
+            Text('¥${recommendList[index]['mallPrice']}'),
+            Text(
+              '¥${recommendList[index]['price']}',
+              style: TextStyle(
+                  decoration: TextDecoration.lineThrough, color: Colors.grey),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _hList() {
+    return Container(
+        height: ScreenUtil().setHeight(330),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: recommendList.length,
+          itemBuilder: (context, index) {
+            return _item(index);
+          },
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: ScreenUtil().setHeight(380),
+      margin: EdgeInsets.only(top: 10),
+      child: Column(
+        children: <Widget>[_titleWidget(), _hList()],
       ),
     );
   }
