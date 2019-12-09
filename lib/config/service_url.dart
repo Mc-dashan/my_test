@@ -6,5 +6,7 @@ const MallGoodsURL = BaseURL + '/wxmini/getMallGoods'; //分类列表商品
 const GoodsDetailURL = BaseURL + '/wxmini/getGoodDetailById'; //商品详情
 
 const servicePath = {
-  'homePageContent': HomeURL //商店首页信息
+  'homePageContent': HomeURL, //商店首页信息
+  'HomeHotURL': HomeHotURL,
+  'CategoryURL': CategoryURL
 };

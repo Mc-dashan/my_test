@@ -1,9 +1,10 @@
 import 'package:demo02/pages/category.dart';
 import 'package:demo02/pages/home.dart';
 import 'package:demo02/pages/shopping_car.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'my.dart';
 
 class IndexPage extends StatefulWidget {
@@ -21,7 +22,7 @@ class _IndexPageState extends State<IndexPage> {
     BottomNavigationBarItem(
         icon: Icon(CupertinoIcons.profile_circled), title: Text("我的")),
   ];
-  final List pageList = [Home(), Category(), ShoppingCar(), My()];
+  final List<Widget> pageList = [Home(), Category(), ShoppingCar(), My()];
 
   final selectColor = Colors.pink;
   final unSelectColor = Colors.grey;
@@ -33,10 +34,7 @@ class _IndexPageState extends State<IndexPage> {
     ScreenUtil.instance = ScreenUtil(width: 750, height: 1334)..init(context);
     return Scaffold(
       backgroundColor: Color.fromRGBO(244, 245, 245, 1.0),
-      appBar: AppBar(
-        title: Text("百姓生活+"),
-      ),
-      body: pageList[_currentIndex],
+      body: IndexedStack(index: _currentIndex, children: pageList),
       bottomNavigationBar: BottomNavigationBar(
         items: itemlist,
         type: BottomNavigationBarType.fixed,

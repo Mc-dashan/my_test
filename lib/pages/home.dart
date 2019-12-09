@@ -1,22 +1,113 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:demo02/service/service_mothed.dart';
+import 'package:flutter_easyrefresh/material_footer.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_easyrefresh/easy_refresh.dart';
+import 'package:flutter_easyrefresh/material_header.dart';
 
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   String responseTv = "";
+
+  int page = 1;
+  List<Map> hotGoodsList = [];
+
+  Widget _hotTitle = Container(
+    margin: EdgeInsets.only(top: 5.0),
+    padding: EdgeInsets.all(10.0),
+    alignment: Alignment.center,
+    color: Colors.transparent,
+    child: Text("火爆专区"),
+  );
+  Widget _wrapList() {
+    if (hotGoodsList.length != 0) {
+      List<Widget> listWidget = hotGoodsList.map((val) {
+        return InkWell(
+          onTap: () {},
+          child: Container(
+            width: ScreenUtil().setWidth(372),
+            color: Colors.white,
+            padding: EdgeInsets.all(5.0),
+            margin: EdgeInsets.only(bottom: 3.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Image.network(
+                  val['image'],
+                  width: ScreenUtil().setWidth(370),
+                ),
+                Text(
+                  val['name'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: Colors.pink, fontSize: ScreenUtil().setSp(26)),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 5.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text('¥${val['mallPrice']}'),
+                      Padding(
+                        padding: EdgeInsets.only(left: 5.0),
+                        child: Text(
+                          '¥${val['price']}',
+                          style: TextStyle(
+                              color: Colors.grey,
+                              decoration: TextDecoration.lineThrough),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList();
+      return Wrap(
+        spacing: 2,
+        children: listWidget,
+      );
+    } else {
+      return Text('');
+    }
+  }
+
+  Widget _hotGoods() {
+    return Container(
+      child: Column(
+        children: <Widget>[_hotTitle, _wrapList()],
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    var formData = {'lon': '115.02932', 'lat': '35.76189'};
     return Scaffold(
+      appBar: AppBar(
+        title: Text("百姓生活+"),
+      ),
       body: FutureBuilder(
-          future: getHomePageContent(),
+          future: request("homePageContent", formData: formData),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               var data = json.decode(snapshot.data.toString());
@@ -29,28 +120,63 @@ class _HomeState extends State<Home> {
               String leaderPhone = data['data']['shopInfo']['leaderPhone'];
               List<Map> recommendList =
                   (data['data']["recommend"] as List).cast();
+              String floor1Title = data['data']['floor1Pic']['PICTURE_ADDRESS'];
+              String floor2Title = data['data']['floor2Pic']['PICTURE_ADDRESS'];
+              String floor3Title = data['data']['floor3Pic']['PICTURE_ADDRESS'];
+              List<Map> floor1List = (data['data']["floor1"] as List).cast();
+              List<Map> floor2List = (data['data']["floor2"] as List).cast();
+              List<Map> floor3List = (data['data']["floor3"] as List).cast();
               if (navigatorList.length > 10) {
                 navigatorList.removeRange(10, navigatorList.length);
               }
-              return SingleChildScrollView(
-                child: Column(
-                  children: <Widget>[
-                    SwiperDiy(
-                      swiperDateList: swiper,
-                    ),
-                    TopNavigator(
-                      navigatorList: navigatorList,
-                    ),
-                    AdBanner(
-                      adPicture: adPrcture,
-                    ),
-                    LeaderPhone(leaderImg: leaderImg, leaderPhone: leaderPhone),
-                    Recommend(
-                      recommendList: recommendList,
-                    ),
-                  ],
-                ),
-              );
+              return EasyRefresh(
+                  onRefresh: () async {
+                    await request("homePageContent", formData: formData);
+                  },
+                  header: MaterialHeader(),
+                  footer: MaterialFooter(),
+                  child: ListView(
+                    children: <Widget>[
+                      SwiperDiy(
+                        swiperDateList: swiper,
+                      ),
+                      TopNavigator(
+                        navigatorList: navigatorList,
+                      ),
+                      AdBanner(
+                        adPicture: adPrcture,
+                      ),
+                      LeaderPhone(
+                          leaderImg: leaderImg, leaderPhone: leaderPhone),
+                      Recommend(
+                        recommendList: recommendList,
+                      ),
+                      FloorTitle(pictureAddress: floor1Title),
+                      FloorContent(
+                        floorGoodsList: floor1List,
+                      ),
+                      FloorTitle(pictureAddress: floor2Title),
+                      FloorContent(
+                        floorGoodsList: floor2List,
+                      ),
+                      FloorTitle(pictureAddress: floor3Title),
+                      FloorContent(
+                        floorGoodsList: floor3List,
+                      ),
+                      _hotGoods(),
+                    ],
+                  ),
+                  onLoad: () async {
+                    var formPage = {'page': page};
+                    await request("HomeHotURL", formData: formPage).then((vel) {
+                      var data = json.decode(vel.toString());
+                      List<Map> newGoodsList = (data['data'] as List).cast();
+                      setState(() {
+                        hotGoodsList.addAll(newGoodsList);
+                        page++;
+                      });
+                    });
+                  });
             } else {
               return Center(child: Text("加载中。。。。"));
             }
@@ -183,13 +309,13 @@ class Recommend extends StatelessWidget {
 
 //每个商品
 
-  Widget _item(int index) {
+  Widget _item(index) {
     return InkWell(
       onTap: () {},
       child: Container(
-        height: ScreenUtil().setHeight(330),
+        height: ScreenUtil().setHeight(400),
         width: ScreenUtil().setWidth(250),
-        padding: EdgeInsets.all(8),
+        padding: EdgeInsets.all(8.0),
         decoration: BoxDecoration(
             color: Colors.white,
             border:
@@ -197,11 +323,13 @@ class Recommend extends StatelessWidget {
         child: Column(
           children: <Widget>[
             Image.network(recommendList[index]['image']),
-            Text('¥${recommendList[index]['mallPrice']}'),
+            Text('￥${recommendList[index]['mallPrice']}'),
             Text(
-              '¥${recommendList[index]['price']}',
+              '￥${recommendList[index]['price']}',
               style: TextStyle(
-                  decoration: TextDecoration.lineThrough, color: Colors.grey),
+                  decoration: TextDecoration.lineThrough,
+                  color: Colors.grey,
+                  fontSize: ScreenUtil().setSp(22)),
             )
           ],
         ),
@@ -209,25 +337,88 @@ class Recommend extends StatelessWidget {
     );
   }
 
-  Widget _hList() {
-    return Container(
-        height: ScreenUtil().setHeight(330),
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: recommendList.length,
-          itemBuilder: (context, index) {
-            return _item(index);
-          },
-        ));
+  Widget _recommedList() {
+    return Expanded(
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: recommendList.length,
+        itemBuilder: (context, index) {
+          return _item(index);
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: ScreenUtil().setHeight(380),
-      margin: EdgeInsets.only(top: 10),
+        height: ScreenUtil().setHeight(400),
+        margin: EdgeInsets.only(top: 10),
+        child: Container(
+          child: Column(
+            children: <Widget>[_titleWidget(), _recommedList()],
+          ),
+        ));
+  }
+}
+
+//楼层标题
+class FloorTitle extends StatelessWidget {
+  final String pictureAddress;
+
+  const FloorTitle({Key key, this.pictureAddress}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        padding: EdgeInsets.all(10.0), child: Image.network(pictureAddress));
+  }
+}
+
+//楼层商品列表
+class FloorContent extends StatelessWidget {
+  final List floorGoodsList;
+
+  const FloorContent({Key key, this.floorGoodsList}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
       child: Column(
-        children: <Widget>[_titleWidget(), _hList()],
+        children: <Widget>[_firstRow(), _otherGoods()],
+      ),
+    );
+  }
+
+  Widget _firstRow() {
+    return Row(
+      children: <Widget>[
+        _goodsItem(floorGoodsList[0]),
+        Column(
+          children: <Widget>[
+            _goodsItem(floorGoodsList[1]),
+            _goodsItem(floorGoodsList[2]),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _otherGoods() {
+    return Row(
+      children: <Widget>[
+        _goodsItem(floorGoodsList[3]),
+        _goodsItem(floorGoodsList[4]),
+      ],
+    );
+  }
+
+  Widget _goodsItem(Map goods) {
+    return Container(
+      width: ScreenUtil().setWidth(375),
+      child: InkWell(
+        onTap: () {},
+        child: Image.network(goods['image']),
       ),
     );
   }
